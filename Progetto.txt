@@ -17,7 +17,7 @@ CREATE TABLE [Tipo Violazione]
 	Descrizione NVARCHAR(50) NOT NULL
 )
 
-CREATE TABLE [dbo].Verbale
+CREATE TABLE Verbale
 (
 	[IdVerbale] INT NOT NULL PRIMARY KEY IDENTITY,
 	DataViolazione DATETIME2 (7)  DEFAULT (getdate()) NULL, 
@@ -40,13 +40,13 @@ VALUES
 
 INSERT INTO [Tipo Violazione] (Descrizione)
 VALUES
-('Eccesso di velocità'),
+('Eccesso di velocitÃ '),
 ('Sosta vietata'),
 ('Guida senza casco'),
 ('Scavalco semaforo rosso'),
 ('Mancato uso della cintura');
 
-INSERT INTO [dbo].Verbale (IndirizzoViolazione, NominativoAgente, IdAnagrafica, IdViolazione, Importo)
+INSERT INTO Verbale (IndirizzoViolazione, NominativoAgente, IdAnagrafica, IdViolazione, Importo)
 VALUES
 ('Via Roma 10', 'Agente1', 1, 1, 100.00),
 ('Via Milano 20', 'Agente2', 2, 2, 150.00),
@@ -120,7 +120,7 @@ SELECT
     FROM Verbale
     WHERE DataViolazione >= '2023-07-05' 
 
--- 10. Conteggio delle violazioni contestate raggruppate per Nominativo dell’agente di Polizia
+-- 10. Conteggio delle violazioni contestate raggruppate per Nominativo dellâ€™agente di Polizia
 SELECT 
     NominativoAgente, COUNT(IdVerbale) AS ViolazioniContestate
     FROM Verbale
@@ -132,7 +132,7 @@ SELECT
     FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
     WHERE v.DecurtamentoPunti = 5
 
--- 12. Cognome, Nome, Indirizzo, Data violazione, Importo e punti decurtati per tutte le violazioni che superino l’importo di 400 euro
+-- 12. Cognome, Nome, Indirizzo, Data violazione, Importo e punti decurtati per tutte le violazioni che superino lâ€™importo di 400 euro
 SELECT
     a.Cognome, a.Nome, a.Indirizzo, v.DataViolazione, v.Importo, v.DecurtamentoPunti
     FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
