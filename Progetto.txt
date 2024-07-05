@@ -1,0 +1,140 @@
+1.CREAZIONE TABELLE
+
+CREATE TABLE Anagrafica
+(
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
+	Cognome NVARCHAR(20) NOT NULL,
+	Nome NVARCHAR(20) NOT NULL,
+	Indirizzo NVARCHAR(50) NOT NULL,
+	Citta NVARCHAR(50) NOT NULL,
+	CAP NVARCHAR(5) NOT NULL,
+	Cod_Fiscale CHAR(16) NOT NULL
+)
+
+CREATE TABLE [Tipo Violazione]
+(
+	[IdViolazione] INT NOT NULL PRIMARY KEY IDENTITY,
+	Descrizione NVARCHAR(50) NOT NULL
+)
+
+CREATE TABLE [dbo].Verbale
+(
+	[IdVerbale] INT NOT NULL PRIMARY KEY IDENTITY,
+	DataViolazione DATETIME2 (7)  DEFAULT (getdate()) NULL, 
+	IndirizzoViolazione NVARCHAR(50) NOT NULL,
+	NominativoAgente NVARCHAR(30) NOT NULL,
+	DataTrascrizioneVerbale DATETIME2 (7)  DEFAULT (getdate()) NULL,
+	Importo MONEY DEFAULT(0) NOT NULL,
+	IdAnagrafica INT NOT NULL,
+	IdViolazione INT NOT NULL
+)
+
+2.POPOLA LE TABELLE
+INSERT INTO Anagrafica (Cognome, Nome, Indirizzo, Citta, CAP, Cod_Fiscale)
+VALUES
+('Rossi', 'Mario', 'Via Roma 1', 'Roma', '00100', 'RSSMRA85M01H501Z'),
+('Bianchi', 'Luca', 'Via Milano 2', 'Milano', '20100', 'BNCLCU89H10F205V'),
+('Verdi', 'Giulia', 'Via Napoli 3', 'Napoli', '80100', 'VRDGLE92D41G702K'),
+('Gialli', 'Sara', 'Via Torino 4', 'Torino', '10100', 'GLLSRA90A54L219E'),
+('Neri', 'Anna', 'Via Firenze 5', 'Firenze', '50100', 'NERNNA80A65D612Q');
+
+INSERT INTO [Tipo Violazione] (Descrizione)
+VALUES
+('Eccesso di velocità'),
+('Sosta vietata'),
+('Guida senza casco'),
+('Scavalco semaforo rosso'),
+('Mancato uso della cintura');
+
+INSERT INTO [dbo].Verbale (IndirizzoViolazione, NominativoAgente, IdAnagrafica, IdViolazione, Importo)
+VALUES
+('Via Roma 10', 'Agente1', 1, 1, 100.00),
+('Via Milano 20', 'Agente2', 2, 2, 150.00),
+('Via Napoli 30', 'Agente3', 3, 3, 120.00),
+('Via Torino 40', 'Agente4', 4, 4, 200.00),
+('Via Firenze 50', 'Agente5', 5, 5, 180.00);
+
+-- 1. Conteggio dei verbali trascritti
+SELECT 
+	COUNT(IdVerbale)
+	FROM Verbale
+
+-- 2. Conteggio dei verbali trascritti raggruppati per anagrafe
+SELECT
+    a.Nome,
+    COUNT(v.IdVerbale) AS NumeroVerbali
+	FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
+	GROUP BY a.Nome
+
+-- 3. Conteggio dei verbali trascritti raggruppati per tipo di violazione
+SELECT 
+	t.Descrizione,
+	COUNT(v.IdVerbale) AS VerbaliPerTipo
+	FROM [Tipo Violazione] t JOIN Verbale v ON t.IdViolazione = v.IdViolazione
+	GROUP BY t.Descrizione
+
+-- 4. Totale dei punti decurtati per ogni anagrafe
+UPDATE Verbale
+SET DecurtamentoPunti = CASE IdVerbale
+    WHEN 1 THEN 3
+    WHEN 2 THEN 5
+    WHEN 3 THEN 2
+    WHEN 4 THEN 4
+    WHEN 5 THEN 1
+    ELSE DecurtamentoPunti 
+END;
+
+SELECT
+    a.Nome,
+    SUM(v.DecurtamentoPunti) AS PuntiDecurtati
+    FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
+    GROUP BY a.Nome
+
+-- 5. Cognome, Nome, Data violazione, Indirizzo violazione, importo e punti decurtati per tutti gli anagrafici residenti a Palermo
+SELECT 
+    a.Nome, a.Cognome, v.DataViolazione, v.IndirizzoViolazione, v.Importo, v.DecurtamentoPunti AS MulteAPalermo
+    FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
+    WHERE a.Citta = 'Palermo'
+
+-- 6. Cognome, Nome, Indirizzo, Data violazione, importo e punti decurtati per le violazioni fatte tra il febbraio 2009 e luglio 2009
+SELECT
+    a.Nome, a.Cognome, a.Indirizzo, v.DataViolazione, v.Importo, v.DecurtamentoPunti AS ViolazioniCommesse
+    FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
+    WHERE V.DataViolazione BETWEEN '2009-02-01' AND '2009-07-31'
+
+-- 7. Totale degli importi per ogni anagrafico
+SELECT 
+    a.Nome, SUM(v.Importo) AS ImportiPerPersona
+    FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
+    GROUP BY a.Nome
+
+-- 8. Visualizzazione di tutti gli anagrafici residenti a Palermo
+SELECT 
+    COUNT(*) AS Palermitani
+    FROM Anagrafica
+    WHERE Citta = 'Palermo'
+
+-- 9. Query che visualizzi Data violazione, Importo e decurta mento punti relativi ad una certa data
+SELECT
+    DataViolazione, Importo, DecurtamentoPunti
+    FROM Verbale
+    WHERE DataViolazione >= '2023-07-05' 
+
+-- 10. Conteggio delle violazioni contestate raggruppate per Nominativo dell’agente di Polizia
+SELECT 
+    NominativoAgente, COUNT(IdVerbale) AS ViolazioniContestate
+    FROM Verbale
+    GROUP BY NominativoAgente
+
+-- 11. Cognome, Nome, Indirizzo, Data violazione, Importo e punti decurtati per tutte le violazioni che superino il decurtamento di 5 punti
+SELECT
+    a.Cognome, a.Nome, a.Indirizzo, v.DataViolazione, v.Importo, v.DecurtamentoPunti
+    FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
+    WHERE v.DecurtamentoPunti = 5
+
+-- 12. Cognome, Nome, Indirizzo, Data violazione, Importo e punti decurtati per tutte le violazioni che superino l’importo di 400 euro
+SELECT
+    a.Cognome, a.Nome, a.Indirizzo, v.DataViolazione, v.Importo, v.DecurtamentoPunti
+    FROM Anagrafica a JOIN Verbale v ON a.Id = v.IdAnagrafica
+    WHERE v.Importo > 400
+
